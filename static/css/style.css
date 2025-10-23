@@ -1,0 +1,193 @@
+:root {
+    --primary-color: #198754;
+    --secondary-color: #20c997;
+    --light-color: #f8f9fa;
+    --dark-color: #343a40;
+    --background-dark: #0a0a0a;
+    --card-bg: #1a1a1a;
+    --text-primary: #333;
+    --text-secondary: #666;
+    --border-color: #dee2e6;
+    --success-color: #28a745;
+    --warning-color: #ffc107;
+    --danger-color: #dc3545;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f5f7fa;
+    color: var(--text-primary);
+    padding-top: 70px;
+    line-height: 1.6;
+}
+
+.main-content {
+    min-height: calc(100vh - 70px);
+    padding-top: 20px;
+}
+
+.main-container {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.navbar-brand {
+    font-weight: 700;
+    font-size: 1.5rem;
+}
+
+.card {
+    border-radius: 12px;
+    border: none;
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.card-header {
+    border-radius: 12px 12px 0 0 !important;
+    font-weight: 600;
+}
+
+.btn-success {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+}
+
+.btn-success:hover {
+    background-color: var(--secondary-color);
+    border-color: var(--secondary-color);
+}
+
+/* Loading Spinner */
+.spinner {
+    display: flex;
+    justify-content: center;
+    margin: 15px 0;
+}
+
+.spinner span {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    margin: 0 4px;
+    background: var(--primary-color);
+    border-radius: 50%;
+    animation: bounce 1.5s infinite;
+}
+
+.spinner span:nth-child(2) {
+    animation-delay: 0.3s;
+}
+
+.spinner span:nth-child(3) {
+    animation-delay: 0.6s;
+}
+
+@keyframes bounce {
+    0%, 100% {
+        transform: translateY(0);
+        opacity: 0.7;
+    }
+    50% {
+        transform: translateY(-12px);
+        opacity: 1;
+    }
+}
+
+/* Health Score Display */
+.health-score {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 20px;
+    font-size: 2.5rem;
+    font-weight: bold;
+    color: white;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.score-excellent { background: linear-gradient(135deg, #28a745, #20c997); }
+.score-good { background: linear-gradient(135deg, #17a2b8, #6f42c1); }
+.score-fair { background: linear-gradient(135deg, #ffc107, #fd7e14); }
+.score-poor { background: linear-gradient(135deg, #dc3545, #e83e8c); }
+
+/* Nutrition Facts Table */
+.nutrition-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 20px;
+}
+
+.nutrition-table th, .nutrition-table td {
+    padding: 12px;
+    border-bottom: 1px solid var(--border-color);
+    text-align: left;
+}
+
+.nutrition-table th {
+    background-color: var(--light-color);
+    font-weight: 600;
+    color: var(--dark-color);
+}
+
+/* Ingredient Tags */
+.ingredient-tag {
+    display: inline-block;
+    padding: 6px 12px;
+    margin: 4px;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.ingredient-healthy {
+    background-color: #d4edda;
+    color: #155724;
+}
+
+.ingredient-concerning {
+    background-color: #f8d7da;
+    color: #721c24;
+}
+
+/* Analysis Sections */
+.analysis-section {
+    margin-bottom: 25px;
+}
+
+.analysis-section h4 {
+    color: var(--primary-color);
+    font-weight: 600;
+    margin-bottom: 15px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid var(--light-color);
+}
+
+.positive-list {
+    color: var(--success-color);
+}
+
+.negative-list {
+    color: var(--danger-color);
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+    .health-score {
+        width: 90px;
+        height: 90px;
+        font-size: 2rem;
+    }
+    
+    .main-container {
+        padding: 15px;
+    }
+    
+    .card-body {
+        padding: 15px;
+    }
+}
