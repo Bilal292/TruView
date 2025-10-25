@@ -126,21 +126,86 @@ document.addEventListener('DOMContentLoaded', () => {
         submitButton.disabled = false;
     }
     
-    // Display analysis results
+    // Display analysis results with viral-ready cards
     function displayResult(result) {
         resultContainer.style.display = 'block';
         resultContent.innerHTML = '';
         
-        // Health score
+        // Determine score class and label
         const healthScore = result.analysis.health_score;
         let scoreClass = 'score-poor';
-        if (healthScore >= 80) scoreClass = 'score-excellent';
-        else if (healthScore >= 60) scoreClass = 'score-good';
-        else if (healthScore >= 40) scoreClass = 'score-fair';
+        let scoreLabel = 'Poor';
+        let takeawayClass = 'takeaway-poor';
         
+        if (healthScore >= 80) {
+            scoreClass = 'score-excellent';
+            scoreLabel = 'Excellent';
+            takeawayClass = 'takeaway-excellent';
+        } else if (healthScore >= 60) {
+            scoreClass = 'score-good';
+            scoreLabel = 'Good';
+            takeawayClass = 'takeaway-good';
+        } else if (healthScore >= 40) {
+            scoreClass = 'score-fair';
+            scoreLabel = 'Fair';
+            takeawayClass = 'takeaway-fair';
+        }
+        
+        // Create viral card HTML
         let html = `
-            <div class="health-score ${scoreClass}">${healthScore}</div>
-            <h3 class="text-center mb-4">Health Score</h3>
+            <div class="viral-card" id="viral-card">
+                <div class="viral-card-header">
+                    <div class="health-score-display">
+                        <div class="score-circle ${scoreClass}">${healthScore}</div>
+                        <div>
+                            <div class="score-label">Health Score: ${scoreLabel}</div>
+                            <div class="mt-2">
+                                ${result.product_info.brand ? `<h3 class="h5">${result.product_info.brand}</h3>` : ''}
+                                ${result.product_info.serving_size ? `<p class="mb-0">Serving: ${result.product_info.serving_size}</p>` : ''}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="viral-card-body">
+                    <div class="key-takeaways ${takeawayClass}">
+                        <div class="takeaway-title">Key Takeaways</div>
+                        <ul class="takeaway-list">
+                            <li>${result.analysis.summary}</li>
+                        </ul>
+                    </div>
+                    
+                    <!-- Analysis Section -->
+                    <div class="analysis-section">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h5 class="text-success">Positive Aspects</h5>
+                                <ul class="positive-list">
+                                    ${result.analysis.positive_aspects.map(aspect => `<li>${aspect}</li>`).join('')}
+                                </ul>
+                            </div>
+                            <div class="col-md-6">
+                                <h5 class="text-danger">Negative Aspects</h5>
+                                <ul class="negative-list">
+                                    ${result.analysis.negative_aspects.map(aspect => `<li>${aspect}</li>`).join('')}
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="share-section">
+                        <button class="download-button" id="download-btn">
+                            <i class="bi bi-download"></i> Download Card
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card shadow-sm mt-4">
+                <div class="card-header bg-success text-white">
+                    <h2 class="mb-0">Detailed Analysis</h2>
+                </div>
+                <div class="card-body">
         `;
         
         // Product info
@@ -230,51 +295,86 @@ document.addEventListener('DOMContentLoaded', () => {
             `;
         }
         
-        // Analysis
-        if (result.analysis) {
-            html += `
-                <div class="analysis-section">
-                    <h4><i class="bi bi-clipboard-check"></i> Analysis</h4>
-                    <div class="row">
-                        <div class="col-md-6">
-                            <h5 class="text-success">Positive Aspects</h5>
-                            <ul class="positive-list">
-            `;
-            
-            result.analysis.positive_aspects.forEach(aspect => {
-                html += `<li>${aspect}</li>`;
-            });
-            
-            html += `
-                            </ul>
-                        </div>
-                        <div class="col-md-6">
-                            <h5 class="text-danger">Negative Aspects</h5>
-                            <ul class="negative-list">
-            `;
-            
-            result.analysis.negative_aspects.forEach(aspect => {
-                html += `<li>${aspect}</li>`;
-            });
-            
-            html += `
-                            </ul>
-                        </div>
-                    </div>
-                    <div class="mt-4">
-                        <h5>Summary</h5>
-                        <div class="alert alert-info">
-                            ${result.analysis.summary}
-                        </div>
-                    </div>
+        html += `
                 </div>
-            `;
-        }
+            </div>
+        `;
         
         resultContent.innerHTML = html;
         
+        // Add event listener for download button
+        document.getElementById('download-btn').addEventListener('click', handleDownload);
+        
         // Scroll to results
         resultContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    // Handle download button click
+    function handleDownload() {
+        const card = document.getElementById('viral-card');
+        const downloadBtn = document.getElementById('download-btn');
+        
+        // Show loading state
+        const originalText = downloadBtn.innerHTML;
+        downloadBtn.innerHTML = '<i class="bi bi-hourglass-split"></i> Generating...';
+        downloadBtn.disabled = true;
+        
+        // Temporarily hide the download button before capturing
+        downloadBtn.style.display = 'none';
+        
+        // Use html2canvas to capture the card
+        html2canvas(card, {
+            backgroundColor: null,
+            scale: 2, // Higher resolution
+            useCORS: true,
+            logging: false
+        }).then(canvas => {
+            // Create download link
+            const link = document.createElement('a');
+            const productName = document.querySelector('.viral-card h3')?.textContent || 'Food Product';
+            const healthScore = document.querySelector('.score-circle').textContent;
+            
+            link.download = `${productName.replace(/[^a-z0-9]/gi, '_').toLowerCase()}_health_score_${healthScore}.png`;
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+            
+            // Show the download button again
+            downloadBtn.style.display = '';
+            
+            // Reset button
+            downloadBtn.innerHTML = originalText;
+            downloadBtn.disabled = false;
+            
+            // Show success message
+            showNotification('Card downloaded successfully!', 'success');
+        }).catch(error => {
+            console.error('Error generating image:', error);
+            
+            // Show the download button again
+            downloadBtn.style.display = '';
+            
+            // Reset button
+            downloadBtn.innerHTML = originalText;
+            downloadBtn.disabled = false;
+            
+            // Show error message
+            showNotification('Failed to download card. Please try again.', 'danger');
+        });
+    }
+
+    // Show notification message
+    function showNotification(message, type) {
+        const notification = document.createElement('div');
+        notification.className = `alert alert-${type} position-fixed`;
+        notification.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 250px;';
+        notification.textContent = message;
+        
+        document.body.appendChild(notification);
+        
+        // Auto-remove after 3 seconds
+        setTimeout(() => {
+            notification.remove();
+        }, 3000);
     }
     
     // Helper functions

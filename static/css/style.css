@@ -167,12 +167,154 @@ body {
     border-bottom: 2px solid var(--light-color);
 }
 
+.analysis-section h5 {
+    font-weight: 600;
+    margin-bottom: 10px;
+}
+
 .positive-list {
     color: var(--success-color);
 }
 
 .negative-list {
     color: var(--danger-color);
+}
+
+/* Viral-Ready Result Cards */
+.viral-card {
+    background: linear-gradient(135deg, #ffffff, #f8f9fa);
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+    margin-bottom: 30px;
+    position: relative;
+    transition: transform 0.3s ease;
+}
+
+.viral-card:hover {
+    transform: translateY(-5px);
+}
+
+.viral-card-header {
+    padding: 25px;
+    position: relative;
+}
+
+.viral-card-body {
+    padding: 0 25px 25px;
+}
+
+.health-score-display {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+}
+
+.score-circle {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 3rem;
+    font-weight: bold;
+    color: white;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+    position: relative;
+}
+
+.score-circle::after {
+    content: "";
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    border: 4px solid rgba(255, 255, 255, 0.3);
+    box-sizing: border-box;
+}
+
+.score-label {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: #495057;
+}
+
+.key-takeaways {
+    background: rgba(255, 255, 255, 0.7);
+    border-radius: 15px;
+    padding: 20px;
+    margin: 20px 0;
+    border-left: 5px solid;
+}
+
+.takeaway-excellent {
+    border-left-color: #28a745;
+}
+
+.takeaway-good {
+    border-left-color: #17a2b8;
+}
+
+.takeaway-fair {
+    border-left-color: #ffc107;
+}
+
+.takeaway-poor {
+    border-left-color: #dc3545;
+}
+
+.takeaway-title {
+    font-weight: 700;
+    margin-bottom: 10px;
+    font-size: 1.1rem;
+}
+
+.takeaway-list {
+    padding-left: 20px;
+    margin-bottom: 0;
+}
+
+.takeaway-list li {
+    margin-bottom: 8px;
+    line-height: 1.4;
+}
+
+.share-section {
+    text-align: center;
+    margin-top: 25px;
+    padding-top: 20px;
+    border-top: 1px solid #e9ecef;
+}
+
+.download-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 10px 20px;
+    background: linear-gradient(135deg, #4CAF50, #45a049);
+    color: white;
+    font-weight: 600;
+    border: none;
+    border-radius: 30px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
+}
+
+.download-button:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 16px rgba(76, 175, 80, 0.4);
+}
+
+.download-button:active {
+    transform: translateY(1px);
+}
+
+.download-button i {
+    font-size: 1.1rem;
 }
 
 /* Responsive Adjustments */
@@ -189,5 +331,19 @@ body {
     
     .card-body {
         padding: 15px;
+    }
+
+    .score-circle {
+        width: 90px;
+        height: 90px;
+        font-size: 2.2rem;
+    }
+    
+    .viral-card-header {
+        padding: 20px 15px;
+    }
+    
+    .viral-card-body {
+        padding: 0 15px 20px;
     }
 }
