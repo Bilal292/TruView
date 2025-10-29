@@ -4,54 +4,358 @@
 {% block title %}TruView AI - Food Nutrition Analyzer{% endblock %}
 
 {% block content %}
-<div class="container main-container">
-    <div class="text-center mb-4">
-        <h1 class="display-5 fw-bold text-success">Food Nutrition Analyzer</h1>
-        <p class="lead">Upload a photo of food packaging to get detailed nutrition analysis and health score</p>
-    </div>
 
-    <!-- Upload Form -->
-    <div class="card shadow-sm mb-4">
-        <div class="card-body">
-            <form id="upload-form">
-                {% csrf_token %}
-                <div class="mb-4">
-                    <label for="image" class="form-label fw-bold">
-                        <i class="bi bi-camera"></i> Upload Food Package Image
-                    </label>
-                    <input type="file" class="form-control" id="image" accept="image/*" required>
-                    <div class="form-text">Supported formats: JPG, PNG. Max size: 8MB</div>
+<!-- Analyzer Section -->
+<section id="analyze" class="analyzer-section py-5">
+    <div class="container">
+        <div class="section-header text-center mb-5" data-aos="fade-up">
+            <h2 class="section-title">Analyze Your Food <span class="text-gradient">Now</span></h2>
+            <p class="section-subtitle">Upload a photo of any food product to get instant nutritional analysis and health score</p>
+        </div>
+        
+        <div class="analyzer-container" data-aos="fade-up" data-aos-delay="100">
+            <div class="analyzer-card">
+                <div class="analyzer-header">
+                    <h3><i class="fas fa-search me-2"></i> Food Nutrition Analyzer</h3>
+                    <p class="analyzer-description">Simply upload a clear photo of the food packaging or nutrition label</p>
                 </div>
-                <div class="d-grid">
-                    <button type="submit" class="btn btn-success btn-lg" id="submit-button">
-                        <i class="bi bi-search"></i> Analyze Nutrition
-                    </button>
+                
+                <div class="analyzer-body">
+                    <form id="upload-form">
+                        {% csrf_token %}
+                        <!-- Hidden file input element -->
+                        <input type="file" id="image" name="image" accept="image/*" style="display: none;">
+                        
+                        <div class="upload-area" id="upload-area">
+                            <div class="upload-content">
+                                <div class="upload-icon">
+                                    <i class="fas fa-cloud-upload-alt"></i>
+                                </div>
+                                <h4>Drag & Drop your image here</h4>
+                                <p>or</p>
+                                <label for="image" class="btn btn-outline-primary browse-btn">Browse Files</label>
+                                <div class="form-text">Supported formats: JPG, PNG. Max size: 8MB</div>
+                            </div>
+                        </div>
+                        
+                        <div class="preview-container" id="preview-container" style="display: none;">
+                            <div class="preview-image" id="preview-image"></div>
+                            <div class="preview-info">
+                                <h5 id="preview-name">Image Name</h5>
+                                <p id="preview-size">Image Size</p>
+                                <button type="button" class="btn btn-sm btn-outline-danger" id="remove-image">
+                                    <i class="fas fa-trash-alt"></i> Remove
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="analyzer-actions">
+                            <button type="submit" class="btn btn-primary btn-lg" id="submit-button">
+                                <i class="fas fa-magic me-2"></i> Analyze Nutrition
+                            </button>
+                        </div>
+                    </form>
                 </div>
-            </form>
+            </div>
+        </div>
+        
+        <!-- Loading Indicator -->
+        <div class="loading-container" id="loading-spinner" style="display: none;" data-aos="fade-up">
+            <div class="loading-content">
+                <div class="loading-spinner">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                </div>
+                <h4>Analyzing Your Food Product</h4>
+                <p>Our AI is examining the nutritional information and ingredients...</p>
+                <div class="progress">
+                    <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 75%" aria-valuenow="75" aria-valuemin="0" aria-valuemax="100"></div>
+                </div>
+                <div id="countdown-timer" class="text-info mt-2"></div>
+            </div>
+        </div>
+        
+        <!-- Results Container -->
+        <div class="results-container" id="result-container" style="display: none;" data-aos="fade-up">
+            <div class="results-header">
+                <h2><i class="fas fa-chart-pie me-2"></i> Nutrition Analysis Results</h2>
+                <p class="results-subtitle">Here's what our AI discovered about your food product</p>
+            </div>
+            
+            <div class="results-content" id="result-content">
+                <!-- Results will be inserted here by JavaScript -->
+            </div>
         </div>
     </div>
+</section>
 
-    <!-- Loading Indicator -->
-    <div class="text-center py-4" id="loading-spinner" style="display: none;">
-        <div class="spinner">
-            <span></span><span></span><span></span>
+<!-- Features Section -->
+<section class="features-section py-5">
+    <div class="container">
+        <div class="section-header text-center mb-5" data-aos="fade-up">
+            <h2 class="section-title">Powerful Features for <span class="text-gradient">Smarter Food Choices</span></h2>
+            <p class="section-subtitle">TruView AI provides comprehensive analysis to help you make informed decisions about the food you eat</p>
         </div>
-        <p class="mt-3">Analyzing your food product...</p>
-        <div id="countdown-timer" class="text-info"></div>
+        <div class="row g-4">
+            <div class="col-md-4" data-aos="fade-up" data-aos-delay="100">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <h3>Health Scoring</h3>
+                    <p>Get an instant 0-100 health score for any food product based on nutritional content, ingredients, and processing level.</p>
+                </div>
+            </div>
+            <div class="col-md-4" data-aos="fade-up" data-aos-delay="200">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-list-ul"></i>
+                    </div>
+                    <h3>Ingredient Analysis</h3>
+                    <p>Identify potentially harmful additives, artificial ingredients, and nutritional benefits with detailed explanations.</p>
+                </div>
+            </div>
+            <div class="col-md-4" data-aos="fade-up" data-aos-delay="300">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-download"></i>
+                    </div>
+                    <h3>Shareable Results</h3>
+                    <p>Download and share your analysis results with friends and family to promote healthier eating habits.</p>
+                </div>
+            </div>
+        </div>
     </div>
+</section>
 
-    <!-- Results Container -->
-    <div class="card shadow-sm" id="result-container" style="display: none;">
-        <div class="card-header bg-success text-white">
-            <h2 class="mb-0">Nutrition Analysis Results</h2>
+<!-- How It Works Section -->
+<section class="how-it-works-section py-5 bg-light">
+    <div class="container">
+        <div class="section-header text-center mb-5" data-aos="fade-up">
+            <h2 class="section-title">How TruView AI <span class="text-gradient">Works</span></h2>
+            <p class="section-subtitle">Get detailed nutritional analysis in three simple steps</p>
         </div>
-        <div class="card-body">
-            <div id="result-content"></div>
+        <div class="row">
+            <div class="col-md-4" data-aos="fade-right">
+                <div class="step-card">
+                    <div class="step-number">1</div>
+                    <div class="step-icon">
+                        <i class="fas fa-camera"></i>
+                    </div>
+                    <h3>Upload Image</h3>
+                    <p>Take a photo of the food packaging or nutrition label and upload it to our platform.</p>
+                </div>
+            </div>
+            <div class="col-md-4" data-aos="fade-up">
+                <div class="step-card">
+                    <div class="step-number">2</div>
+                    <div class="step-icon">
+                        <i class="fas fa-brain"></i>
+                    </div>
+                    <h3>AI Analysis</h3>
+                    <p>Our advanced AI analyzes the image, extracts nutritional information, and evaluates ingredient quality.</p>
+                </div>
+            </div>
+            <div class="col-md-4" data-aos="fade-left">
+                <div class="step-card">
+                    <div class="step-number">3</div>
+                    <div class="step-icon">
+                        <i class="fas fa-file-download"></i>
+                    </div>
+                    <h3>Get Results</h3>
+                    <p>Receive a comprehensive analysis with health score, nutritional breakdown, and insights to share.</p>
+                </div>
+            </div>
         </div>
     </div>
-</div>
+</section>
+
+<!-- Interactive Showcase Section -->
+<section class="showcase-section py-5 bg-light">
+    <div class="container">
+        <div class="section-header text-center mb-5" data-aos="fade-up">
+            <h2 class="section-title">See TruView AI <span class="text-gradient">In Action</span></h2>
+            <p class="section-subtitle">Explore how our AI transforms food analysis into actionable insights</p>
+        </div>
+        
+        <div class="showcase-container">
+            <div class="showcase-tabs" data-aos="fade-up">
+                <ul class="nav nav-pills justify-content-center mb-4" id="showcaseTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="before-tab" data-bs-toggle="pill" data-bs-target="#before" type="button" role="tab" aria-controls="before" aria-selected="true">Before</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="analysis-tab" data-bs-toggle="pill" data-bs-target="#analysis" type="button" role="tab" aria-controls="analysis" aria-selected="false">Analysis</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="insights-tab" data-bs-toggle="pill" data-bs-target="#insights" type="button" role="tab" aria-controls="insights" aria-selected="false">Insights</button>
+                    </li>
+                </ul>
+                
+                <div class="tab-content" id="showcaseTabsContent">
+                    <div class="tab-pane fade show active" id="before" role="tabpanel" aria-labelledby="before-tab">
+                        <div class="showcase-item">
+                            <div class="row align-items-center">
+                                <div class="col-md-6">
+                                    <div class="showcase-image">
+                                        <img src="{% static 'images/product-before.jpg' %}" alt="Food Product Label" class="img-fluid rounded-3 shadow">
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="showcase-content">
+                                        <h3>Original Food Label</h3>
+                                        <p>Traditional nutrition labels can be confusing and difficult to interpret. They often contain technical terms and lack context about what the ingredients actually mean for your health.</p>
+                                        <ul class="showcase-list">
+                                            <li><i class="fas fa-times-circle text-danger"></i> Complex nutritional information</li>
+                                            <li><i class="fas fa-times-circle text-danger"></i> Difficult to understand ingredient lists</li>
+                                            <li><i class="fas fa-times-circle text-danger"></i> No health scoring system</li>
+                                            <li><i class="fas fa-times-circle text-danger"></i> Time-consuming to analyze</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="tab-pane fade" id="analysis" role="tabpanel" aria-labelledby="analysis-tab">
+                        <div class="showcase-item">
+                            <div class="row align-items-center">
+                                <div class="col-md-6">
+                                    <div class="showcase-content">
+                                        <h3>AI-Powered Analysis</h3>
+                                        <p>TruView AI instantly analyzes the nutrition label and ingredients, breaking down complex information into easy-to-understand insights.</p>
+                                        <ul class="showcase-list">
+                                            <li><i class="fas fa-check-circle text-success"></i> Instant health scoring (0-100)</li>
+                                            <li><i class="fas fa-check-circle text-success"></i> Ingredient quality assessment</li>
+                                            <li><i class="fas fa-check-circle text-success"></i> Nutritional breakdown</li>
+                                            <li><i class="fas fa-check-circle text-success"></i> Additive and preservative analysis</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="showcase-image">
+                                        <img src="{% static 'images/product-analysis.jpg' %}" alt="AI Analysis" class="img-fluid rounded-3 shadow">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="tab-pane fade" id="insights" role="tabpanel" aria-labelledby="insights-tab">
+                        <div class="showcase-item">
+                            <div class="row align-items-center">
+                                <div class="col-md-6">
+                                    <div class="showcase-image">
+                                        <img src="{% static 'images/product-insights.jpg' %}" alt="Health Insights" class="img-fluid rounded-3 shadow">
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="showcase-content">
+                                        <h3>Actionable Health Insights</h3>
+                                        <p>Go beyond basic nutrition facts with personalized insights that help you make smarter food choices based on your health goals.</p>
+                                        <ul class="showcase-list">
+                                            <li><i class="fas fa-lightbulb text-warning"></i> Personalized recommendations</li>
+                                            <li><i class="fas fa-lightbulb text-warning"></i> Healthier alternatives</li>
+                                            <li><i class="fas fa-lightbulb text-warning"></i> Nutritional pros and cons</li>
+                                            <li><i class="fas fa-lightbulb text-warning"></i> Shareable reports</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- FAQ Section -->
+<section class="faq-section py-5">
+    <div class="container">
+        <div class="section-header text-center mb-5" data-aos="fade-up">
+            <h2 class="section-title">Frequently Asked <span class="text-gradient">Questions</span></h2>
+            <p class="section-subtitle">Find answers to common questions about TruView AI</p>
+        </div>
+        
+        <div class="row">
+            <div class="col-lg-8 mx-auto" data-aos="fade-up">
+                <div class="accordion" id="faqAccordion">
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="headingOne">
+                            <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne">
+                                How accurate is TruView AI's analysis?
+                            </button>
+                        </h2>
+                        <div id="collapseOne" class="accordion-collapse collapse show" data-bs-parent="#faqAccordion">
+                            <div class="accordion-body">
+                                TruView AI uses advanced machine learning models trained on thousands of food products and nutritional data. Our accuracy rate is over 95% for most common food products. However, for the most precise nutritional information, always refer to the product's official nutrition label.
+                            </div>
+                        </div>
+                    </div>
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="headingTwo">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTwo">
+                                What types of food products can I analyze?
+                            </button>
+                        </h2>
+                        <div id="collapseTwo" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                            <div class="accordion-body">
+                                TruView AI can analyze most packaged food products with clear nutrition labels and ingredient lists. This includes snacks, beverages, canned goods, frozen foods, and more. The system works best with products that have clear, readable labels in English.
+                            </div>
+                        </div>
+                    </div>
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="headingThree">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseThree">
+                                Is my data secure and private?
+                            </button>
+                        </h2>
+                        <div id="collapseThree" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                            <div class="accordion-body">
+                                Absolutely. At TruView AI, we take your privacy seriously. All uploaded images are processed securely and are not stored permanently on our servers. We do not share your personal information or analysis results with third parties. Please review our Privacy Policy for more details.
+                            </div>
+                        </div>
+                    </div>
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="headingFour">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseFour">
+                                How is the health score calculated?
+                            </button>
+                        </h2>
+                        <div id="collapseFour" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                            <div class="accordion-body">
+                                Our health score algorithm considers multiple factors including nutritional content (calories, sugar, sodium, etc.), ingredient quality, presence of additives or preservatives, and processing level. Products with whole food ingredients, balanced nutrition, and minimal processing receive higher scores.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- CTA Section -->
+<section class="cta-section py-5" data-aos="zoom-in">
+    <div class="container">
+        <div class="cta-content text-center">
+            <h2 class="cta-title">Ready to Make Smarter Food Choices?</h2>
+            <p class="cta-subtitle">Join thousands of users who have transformed their eating habits with TruView AI</p>
+            <div class="cta-buttons">
+                <a href="#analyze" class="btn btn-primary btn-lg">
+                    <span class="btn-text">Start Analyzing Now</span>
+                    <i class="fas fa-arrow-right ms-2"></i>
+                </a>
+                <a href="/examples" class="btn btn-outline-light btn-lg">
+                    <span class="btn-text">View Examples</span>
+                    <i class="fas fa-images ms-2"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+</section>
 {% endblock %}
 
 {% block extra_js %}
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
     <script src="{% static 'js/script.js' %}"></script>
 {% endblock %}

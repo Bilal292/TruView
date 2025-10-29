@@ -1,11 +1,19 @@
 document.addEventListener('DOMContentLoaded', () => {
+    // Initialize components
     const form = document.getElementById('upload-form');
     const imageInput = document.getElementById('image');
+    const uploadArea = document.getElementById('upload-area');
+    const previewContainer = document.getElementById('preview-container');
+    const previewImage = document.getElementById('preview-image');
+    const previewName = document.getElementById('preview-name');
+    const previewSize = document.getElementById('preview-size');
+    const removeImageBtn = document.getElementById('remove-image');
     const spinner = document.getElementById('loading-spinner');
     const resultContainer = document.getElementById('result-container');
     const resultContent = document.getElementById('result-content');
     const submitButton = document.getElementById('submit-button');
     const countdownElement = document.getElementById('countdown-timer');
+    const backToTopBtn = document.getElementById('backToTop');
     
     let socket;
     let countdownInterval;
@@ -13,7 +21,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const ws_scheme = window.location.protocol === "https:" ? "wss" : "ws";
     const ws_route = '/ws/nutrition-analysis/';
     
-    // Create WebSocket connection
+    // Initialize WebSocket connection
     function createSocket() {
         socket = new WebSocket(`${ws_scheme}://${window.location.host}${ws_route}`);
         
@@ -23,7 +31,7 @@ document.addEventListener('DOMContentLoaded', () => {
         };
         
         socket.onerror = () => {
-            alert("Connection error. Please try again.");
+            showNotification("Connection error. Please try again.", "danger");
             submitButton.disabled = false;
             spinner.style.display = 'none';
         };
@@ -36,13 +44,118 @@ document.addEventListener('DOMContentLoaded', () => {
     // Initialize WebSocket
     createSocket();
     
+    // Back to top button functionality
+    window.addEventListener('scroll', () => {
+        if (window.scrollY > 1000) {
+            backToTopBtn.classList.add('show');
+        } else {
+            backToTopBtn.classList.remove('show');
+        }
+    });
+    
+    backToTopBtn.addEventListener('click', () => {
+        window.scrollTo({
+            top: 500,
+            behavior: 'smooth'
+        });
+    });
+    
+    // Drag and drop functionality
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+        uploadArea.addEventListener(eventName, preventDefaults, false);
+    });
+    
+    function preventDefaults(e) {
+        e.preventDefault();
+        e.stopPropagation();
+    }
+    
+    ['dragenter', 'dragover'].forEach(eventName => {
+        uploadArea.addEventListener(eventName, highlight, false);
+    });
+    
+    ['dragleave', 'drop'].forEach(eventName => {
+        uploadArea.addEventListener(eventName, unhighlight, false);
+    });
+    
+    function highlight() {
+        uploadArea.classList.add('highlight');
+    }
+    
+    function unhighlight() {
+        uploadArea.classList.remove('highlight');
+    }
+    
+    uploadArea.addEventListener('drop', handleDrop, false);
+    
+    function handleDrop(e) {
+        const dt = e.dataTransfer;
+        const files = dt.files;
+        
+        if (files.length > 0) {
+            imageInput.files = files;
+            handleFiles(files);
+        }
+    }
+    
+    // File input change handler
+    imageInput.addEventListener('change', function() {
+        if (this.files.length > 0) {
+            handleFiles(this.files);
+        }
+    });
+    
+    // Handle file selection
+    function handleFiles(files) {
+        const file = files[0];
+        
+        // Check file type
+        if (!file.type.match('image.*')) {
+            showNotification('Please upload an image file (JPG, PNG).', 'danger');
+            return;
+        }
+        
+        // Check file size (8MB max)
+        if (file.size > 8 * 1024 * 1024) {
+            showNotification('File size exceeds the 8MB limit.', 'danger');
+            return;
+        }
+        
+        // Show preview
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            previewImage.innerHTML = `<img src="${e.target.result}" alt="Preview">`;
+            previewName.textContent = file.name;
+            previewSize.textContent = formatFileSize(file.size);
+            uploadArea.style.display = 'none';
+            previewContainer.style.display = 'flex';
+        };
+        reader.readAsDataURL(file);
+    }
+    
+    // Remove image handler
+    removeImageBtn.addEventListener('click', function() {
+        imageInput.value = '';
+        uploadArea.style.display = 'block';
+        previewContainer.style.display = 'none';
+    });
+    
+    // Format file size
+    function formatFileSize(bytes) {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+    
     // Handle form submission
     form.addEventListener('submit', async (event) => {
         event.preventDefault();
         
         const file = imageInput.files[0];
         if (!file) {
-            alert("Please upload an image.");
+            showNotification("Please upload an image.", "warning");
             return;
         }
         
@@ -94,12 +207,12 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                 }, 1000);
             } else {
-                alert("Image upload failed. Please try again.");
+                showNotification("Image upload failed. Please try again.", "danger");
                 submitButton.disabled = false;
                 spinner.style.display = 'none';
             }
         } catch (error) {
-            alert("Something went wrong. Please try again.");
+            showNotification("Something went wrong. Please try again.", "danger");
             submitButton.disabled = false;
             spinner.style.display = 'none';
             clearInterval(countdownInterval);
@@ -117,7 +230,7 @@ document.addEventListener('DOMContentLoaded', () => {
             displayResult(data.analysis_result);
         } else if (data.error) {
             spinner.style.display = 'none';
-            alert(data.error);
+            showNotification(data.error, "danger");
         } else if (data.received) {
             // Just a receipt, do nothing
             return;
@@ -193,6 +306,19 @@ document.addEventListener('DOMContentLoaded', () => {
                         </div>
                     </div>
                     
+                    <!-- Notable Ingredients Section -->
+                    ${result.notable_ingredients && result.notable_ingredients.length > 0 ? `
+                        <div class="notable-ingredients-section">
+                            <h5><i class="bi bi-exclamation-triangle"></i> Notable Ingredients</h5>
+                            <div class="ingredients-container">
+                                ${result.notable_ingredients.map(ingredient => {
+                                    const isConcerning = isIngredientConcerning(ingredient);
+                                    return `<span class="ingredient-tag ${isConcerning ? 'ingredient-concerning' : 'ingredient-healthy'}">${ingredient}</span>`;
+                                }).join('')}
+                            </div>
+                        </div>
+                    ` : ''}
+                    
                     <div class="share-section">
                         <button class="download-button" id="download-btn">
                             <i class="bi bi-download"></i> Download Card
@@ -202,7 +328,7 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
             
             <div class="card shadow-sm mt-4">
-                <div class="card-header bg-success text-white">
+                <div class="card-header bg-primary text-white">
                     <h2 class="mb-0">Detailed Analysis</h2>
                 </div>
                 <div class="card-body">
@@ -272,7 +398,7 @@ document.addEventListener('DOMContentLoaded', () => {
             `;
         }
         
-        // Notable ingredients
+        // Notable ingredients (already shown in viral card, but also showing in detailed view)
         if (result.notable_ingredients && result.notable_ingredients.length > 0) {
             html += `
                 <div class="analysis-section">
@@ -412,4 +538,53 @@ document.addEventListener('DOMContentLoaded', () => {
         ];
         return concerning.some(term => ingredient.toLowerCase().includes(term));
     }
+    
+    // Add interactive animations
+    addInteractiveAnimations();
 });
+
+function addInteractiveAnimations() {
+    // Add parallax effect to hero section
+    window.addEventListener('scroll', () => {
+        const scrolled = window.pageYOffset;
+        const parallax = document.querySelector('.hero-section');
+        if (parallax) {
+            parallax.style.transform = `translateY(${scrolled * 0.5}px)`;
+        }
+    });
+    
+    // Add floating animation to blobs
+    const blobs = document.querySelectorAll('.bg-blob');
+    blobs.forEach((blob, index) => {
+        // Random animation duration for each blob
+        const duration = 15 + Math.random() * 10;
+        blob.style.animationDuration = `${duration}s`;
+        
+        // Random animation delay
+        const delay = Math.random() * 5;
+        blob.style.animationDelay = `${delay}s`;
+    });
+    
+    // Add hover effect to feature cards
+    const featureCards = document.querySelectorAll('.feature-card');
+    featureCards.forEach(card => {
+        card.addEventListener('mouseenter', function() {
+            this.style.transform = 'translateY(-10px) scale(1.02)';
+        });
+        
+        card.addEventListener('mouseleave', function() {
+            this.style.transform = '';
+        });
+    });
+    
+    // Add pulse animation to CTA buttons
+    const ctaButtons = document.querySelectorAll('.cta-button');
+    ctaButtons.forEach(button => {
+        setInterval(() => {
+            button.classList.add('pulse');
+            setTimeout(() => {
+                button.classList.remove('pulse');
+            }, 1000);
+        }, 5000);
+    });
+}
