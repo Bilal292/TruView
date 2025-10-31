@@ -10,14 +10,12 @@
     <div class="container">
         <div class="section-header text-center mb-5" data-aos="fade-up">
             <h2 class="section-title">Analyze Your Food <span class="text-gradient">Now</span></h2>
-            <p class="section-subtitle">Upload a photo of any food product to get instant nutritional analysis and health score</p>
         </div>
         
         <div class="analyzer-container" data-aos="fade-up" data-aos-delay="100">
             <div class="analyzer-card">
                 <div class="analyzer-header">
                     <h3><i class="fas fa-search me-2"></i> Food Nutrition Analyzer</h3>
-                    <p class="analyzer-description">Simply upload a clear photo of the food packaging or nutrition label</p>
                 </div>
                 
                 <div class="analyzer-body">
@@ -31,9 +29,13 @@
                                 <div class="upload-icon">
                                     <i class="fas fa-cloud-upload-alt"></i>
                                 </div>
-                                <h4>Drag & Drop your image here</h4>
-                                <p>or</p>
-                                <label for="image" class="btn btn-outline-primary browse-btn">Browse Files</label>
+                                <p>Upload a photo of the food package nutrition/ingredient information</p>
+                                <div class="upload-buttons">
+                                    <label for="image" class="btn btn-outline-primary browse-btn"> Upload </label>
+                                    <button type="button" class="btn btn-outline-primary browse-btn" id="camera-btn">
+                                        Camera
+                                    </button>
+                                </div>
                                 <div class="form-text">Supported formats: JPG, PNG. Max size: 8MB</div>
                             </div>
                         </div>
@@ -48,6 +50,22 @@
                                 </button>
                             </div>
                         </div>
+
+                        <div class="camera-view" id="camera-view" style="display: none;">
+                            <video id="camera-video" autoplay playsinline></video>
+                            <div class="camera-controls">
+                                <button type="button" id="switch-camera-btn" class="btn btn-outline-light btn-lg">
+                                    <i class="fas fa-sync-alt"></i>
+                                </button>
+                                <button type="button" id="capture-btn" class="btn btn-outline-light btn-lg">
+                                    <i class="fas fa-camera"></i>
+                                </button>
+                                <button type="button" id="close-camera-btn" class="btn btn-outline-light btn-lg">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <canvas id="camera-canvas" style="display: none;"></canvas>
                         
                         <div class="analyzer-actions">
                             <button type="submit" class="btn btn-primary btn-lg" id="submit-button">
@@ -343,7 +361,7 @@
             <div class="cta-buttons">
                 <a href="#analyze" class="btn btn-primary btn-lg">
                     <span class="btn-text">Start Analyzing Now</span>
-                    <i class="fas fa-arrow-right ms-2"></i>
+                    <i class="fas fa-arrow-up ms-2"></i>
                 </a>
                 <a href="/examples" class="btn btn-outline-light btn-lg">
                     <span class="btn-text">View Examples</span>

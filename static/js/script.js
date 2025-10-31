@@ -13,13 +13,32 @@ document.addEventListener('DOMContentLoaded', () => {
     const resultContent = document.getElementById('result-content');
     const submitButton = document.getElementById('submit-button');
     const countdownElement = document.getElementById('countdown-timer');
-    const backToTopBtn = document.getElementById('backToTop');
-    
+
+    const cameraBtn = document.getElementById('camera-btn');
+    const cameraView = document.getElementById('camera-view');
+    const videoElement = document.getElementById('camera-video');
+    const canvasElement = document.getElementById('camera-canvas');
+    const captureBtn = document.getElementById('capture-btn');
+    const switchCameraBtn = document.getElementById('switch-camera-btn');
+    const closeCameraBtn = document.getElementById('close-camera-btn');
+
+    let currentStream = null;
+    let currentFacingMode = 'environment'; // Start with back camera
+    let devices = [];
+    let capturedFile = null; // Store captured file globally
+        
     let socket;
     let countdownInterval;
     let timeLeft = 60;
     const ws_scheme = window.location.protocol === "https:" ? "wss" : "ws";
     const ws_route = '/ws/nutrition-analysis/';
+
+    // Check if browser supports camera
+    if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+        cameraBtn.style.display = 'inline-flex';
+    } else {
+        cameraBtn.style.display = 'none';
+    }
     
     // Initialize WebSocket connection
     function createSocket() {
@@ -43,22 +62,6 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Initialize WebSocket
     createSocket();
-    
-    // Back to top button functionality
-    window.addEventListener('scroll', () => {
-        if (window.scrollY > 1000) {
-            backToTopBtn.classList.add('show');
-        } else {
-            backToTopBtn.classList.remove('show');
-        }
-    });
-    
-    backToTopBtn.addEventListener('click', () => {
-        window.scrollTo({
-            top: 500,
-            behavior: 'smooth'
-        });
-    });
     
     // Drag and drop functionality
     ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
@@ -129,6 +132,9 @@ document.addEventListener('DOMContentLoaded', () => {
             previewSize.textContent = formatFileSize(file.size);
             uploadArea.style.display = 'none';
             previewContainer.style.display = 'flex';
+            
+            // Store the file for later use
+            capturedFile = file;
         };
         reader.readAsDataURL(file);
     }
@@ -138,6 +144,15 @@ document.addEventListener('DOMContentLoaded', () => {
         imageInput.value = '';
         uploadArea.style.display = 'block';
         previewContainer.style.display = 'none';
+        
+        // Clear captured file
+        capturedFile = null;
+        
+        // Also stop camera if it's active
+        if (cameraView.style.display !== 'none') {
+            stopCameraStream();
+            cameraView.style.display = 'none';
+        }
     });
     
     // Format file size
@@ -153,7 +168,9 @@ document.addEventListener('DOMContentLoaded', () => {
     form.addEventListener('submit', async (event) => {
         event.preventDefault();
         
-        const file = imageInput.files[0];
+        // Get file from either input or captured file
+        let file = imageInput.files[0] || capturedFile;
+        
         if (!file) {
             showNotification("Please upload an image.", "warning");
             return;
@@ -166,11 +183,11 @@ document.addEventListener('DOMContentLoaded', () => {
         const requestId = generateId();
         const formData = new FormData();
         formData.append('image', file);
+        formData.append('csrfmiddlewaretoken', getCSRFToken());
         
         try {
             const response = await fetch('/upload-image/', {
                 method: 'POST',
-                headers: { 'X-CSRFToken': getCSRFToken() },
                 body: formData
             });
             
@@ -541,6 +558,124 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Add interactive animations
     addInteractiveAnimations();
+
+    // Camera button click handler
+    cameraBtn.addEventListener('click', async () => {
+        try {
+            // Get available cameras
+            devices = await navigator.mediaDevices.enumerateDevices();
+            const videoDevices = devices.filter(device => device.kind === 'videoinput');
+            
+            // Start with back camera
+            currentFacingMode = 'environment';
+            await startCamera(currentFacingMode);
+            
+            // Show camera view, hide upload area
+            cameraView.style.display = 'block';
+            uploadArea.style.display = 'none';
+            previewContainer.style.display = 'none';
+        } catch (err) {
+            console.error("Error accessing camera", err);
+            showNotification("Could not access the camera. Please check permissions.", "danger");
+        }
+    });
+
+    // Start camera function
+    async function startCamera(facingMode) {
+        try {
+            // Stop any existing stream
+            if (currentStream) {
+                currentStream.getTracks().forEach(track => track.stop());
+            }
+            
+            const constraints = {
+                video: {
+                    facingMode: facingMode,
+                    width: { ideal: 1280 },
+                    height: { ideal: 720 }
+                }
+            };
+            
+            currentStream = await navigator.mediaDevices.getUserMedia(constraints);
+            videoElement.srcObject = currentStream;
+            
+            // Apply correct mirroring based on camera
+            if (facingMode === 'user') {
+                videoElement.classList.add('front-camera');
+                videoElement.classList.remove('back-camera');
+            } else {
+                videoElement.classList.add('back-camera');
+                videoElement.classList.remove('front-camera');
+            }
+        } catch (err) {
+            console.error("Error starting camera", err);
+            showNotification("Could not start the camera. Please try again.", "danger");
+        }
+    }
+
+    // Switch camera button handler
+    switchCameraBtn.addEventListener('click', async () => {
+        // Toggle between front and back camera
+        currentFacingMode = currentFacingMode === 'environment' ? 'user' : 'environment';
+        await startCamera(currentFacingMode);
+    });
+
+    // Capture button handler
+    captureBtn.addEventListener('click', () => {
+        // Set canvas dimensions to match video
+        canvasElement.width = videoElement.videoWidth;
+        canvasElement.height = videoElement.videoHeight;
+        
+        const context = canvasElement.getContext('2d');
+        
+        // If using front camera, flip the image horizontally
+        if (currentFacingMode === 'user') {
+            context.translate(canvasElement.width, 0);
+            context.scale(-1, 1);
+        }
+        
+        // Draw the video frame to canvas
+        context.drawImage(videoElement, 0, 0, canvasElement.width, canvasElement.height);
+        
+        // Convert canvas to blob
+        canvasElement.toBlob((blob) => {
+            // Create a file from the blob
+            const file = new File([blob], "camera-capture.jpg", { type: "image/jpeg" });
+            
+            // Store the captured file globally
+            capturedFile = file;
+            
+            // Set the file to the file input
+            const dataTransfer = new DataTransfer();
+            dataTransfer.items.add(file);
+            imageInput.files = dataTransfer.files;
+            
+            // Show the preview
+            handleFiles([file]);
+            
+            // Stop the stream
+            stopCameraStream();
+            
+            // Hide camera view and show the preview
+            cameraView.style.display = 'none';
+            previewContainer.style.display = 'flex';
+        }, "image/jpeg", 0.9);
+    });
+
+    // Close camera button handler
+    closeCameraBtn.addEventListener('click', () => {
+        stopCameraStream();
+        cameraView.style.display = 'none';
+        uploadArea.style.display = 'block';
+    });
+
+    // Function to stop camera stream
+    function stopCameraStream() {
+        if (currentStream) {
+            currentStream.getTracks().forEach(track => track.stop());
+            currentStream = null;
+        }
+    }
 });
 
 function addInteractiveAnimations() {
