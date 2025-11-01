@@ -256,13 +256,42 @@ document.addEventListener('DOMContentLoaded', () => {
         submitButton.disabled = false;
     }
     
-    // Display analysis results with viral-ready cards
+    // Helper function to ensure array or convert to array
+    function ensureArray(value) {
+        if (Array.isArray(value)) {
+            return value;
+        }
+        if (value === null || value === undefined) {
+            return [];
+        }
+        return [value];
+    }
+    
+    // Display analysis results with enhanced card design
     function displayResult(result) {
+        // Safety check for result object
+        if (!result) {
+            showNotification("No analysis data available", "warning");
+            return;
+        }
+        
         resultContainer.style.display = 'block';
         resultContent.innerHTML = '';
         
+        // Safely access nested properties
+        const productInfo = result.product_info || {};
+        const analysis = result.analysis || {};
+        const nutritionFacts = result.nutrition_facts || {};
+        const processingAnalysis = result.processing_analysis || {};
+        const recommendations = analysis.recommendations || {};
+        const sugarAnalysis = result.sugar_analysis || {};
+        const contaminationRisks = result.contamination_risks || {};
+        const detailedIngredientAnalysis = ensureArray(result.detailed_ingredient_analysis);
+        const additiveImpact = ensureArray(result.additive_impact);
+        const environmentalImpact = result.environmental_impact || {};
+        
         // Determine score class and label
-        const healthScore = result.analysis.health_score;
+        const healthScore = analysis.health_score || 0;
         let scoreClass = 'score-poor';
         let scoreLabel = 'Poor';
         let takeawayClass = 'takeaway-poor';
@@ -281,164 +310,290 @@ document.addEventListener('DOMContentLoaded', () => {
             takeawayClass = 'takeaway-fair';
         }
         
-        // Create viral card HTML
+        // Create enhanced card HTML
         let html = `
-            <div class="viral-card" id="viral-card">
-                <div class="viral-card-header">
-                    <div class="health-score-display">
+            <div class="enhanced-result-card" id="enhanced-result-card">
+                <!-- Header Section -->
+                <div class="card-header-section">
+                    <div class="product-info">
+                        ${productInfo.brand ? `<h3 class="product-brand">${productInfo.brand}</h3>` : ''}
+                        <div class="product-meta">
+                            ${productInfo.serving_size ? `<span class="serving-size"><i class="fas fa-utensils"></i> ${productInfo.serving_size}</span>` : ''}
+                            ${productInfo.calories_per_serving ? `<span class="calories"><i class="fas fa-fire"></i> ${productInfo.calories_per_serving} cal</span>` : ''}
+                        </div>
+                    </div>
+                    <div class="health-score-container">
                         <div class="score-circle ${scoreClass}">${healthScore}</div>
-                        <div>
-                            <div class="score-label">Health Score: ${scoreLabel}</div>
-                            <div class="mt-2">
-                                ${result.product_info.brand ? `<h3 class="h5">${result.product_info.brand}</h3>` : ''}
-                                ${result.product_info.serving_size ? `<p class="mb-0">Serving: ${result.product_info.serving_size}</p>` : ''}
+                        <div class="score-label">Health Score: ${scoreLabel}</div>
+                    </div>
+                </div>
+                
+                <!-- Key Takeaways Section -->
+                <div class="key-takeaways ${takeawayClass}">
+                    <div class="section-title"><i class="fas fa-lightbulb"></i> Key Takeaways</div>
+                    <p>${analysis.summary || 'No summary available'}</p>
+                </div>
+                
+                <!-- Nutrition Highlights Section -->
+                <div class="nutrition-highlights">
+                    <div class="section-title"><i class="fas fa-chart-pie"></i> Nutrition Highlights</div>
+                    <div class="nutrition-grid">
+                        ${generateNutritionHighlights(nutritionFacts)}
+                    </div>
+                </div>
+                
+                <!-- Ingredients Section -->
+                ${result.ingredients && ensureArray(result.ingredients).length > 0 ? `
+                    <div class="ingredients-section">
+                        <div class="section-title"><i class="fas fa-list-ul"></i> Ingredients</div>
+                        <div class="ingredients-container">
+                            <div class="ingredients-list">${ensureArray(result.ingredients).join(', ')}</div>
+                            ${result.notable_ingredients && ensureArray(result.notable_ingredients).length > 0 ? `
+                                <div class="notable-ingredients">
+                                    <div class="notable-title">Notable Ingredients:</div>
+                                    <div class="ingredients-tags">
+                                        ${ensureArray(result.notable_ingredients).map(ingredient => {
+                                            const isConcerning = isIngredientConcerning(ingredient);
+                                            return `<span class="ingredient-tag ${isConcerning ? 'ingredient-concerning' : 'ingredient-healthy'}">${ingredient}</span>`;
+                                        }).join('')}
+                                    </div>
+                                </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                ` : ''}
+                
+                <!-- Analysis Section -->
+                <div class="analysis-section">
+                    <div class="section-title"><i class="fas fa-balance-scale"></i> Product Analysis</div>
+                    <div class="analysis-grid">
+                        <div class="analysis-column">
+                            <div class="analysis-positive">
+                                <h5><i class="fas fa-check-circle"></i> Positive Aspects</h5>
+                                <ul>
+                                    ${ensureArray(analysis.positive_aspects).map(aspect => `<li>${aspect}</li>`).join('')}
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="analysis-column">
+                            <div class="analysis-negative">
+                                <h5><i class="fas fa-times-circle"></i> Negative Aspects</h5>
+                                <ul>
+                                    ${ensureArray(analysis.negative_aspects).map(aspect => `<li>${aspect}</li>`).join('')}
+                                </ul>
                             </div>
                         </div>
                     </div>
                 </div>
                 
-                <div class="viral-card-body">
-                    <div class="key-takeaways ${takeawayClass}">
-                        <div class="takeaway-title">Key Takeaways</div>
-                        <ul class="takeaway-list">
-                            <li>${result.analysis.summary}</li>
-                        </ul>
+                <!-- Processing Analysis Section -->
+                ${processingAnalysis.level ? `
+                    <div class="processing-analysis-section">
+                        <div class="section-title"><i class="fas fa-cogs"></i> Processing Analysis</div>
+                        <div class="processing-info">
+                            <div class="processing-level ${processingAnalysis.level.toLowerCase().replace(' ', '-')}">${processingAnalysis.level}</div>
+                            <p>${processingAnalysis.health_implications || 'No information available'}</p>
+                            ${processingAnalysis.indicators && ensureArray(processingAnalysis.indicators).length > 0 ? `
+                                <div class="processing-indicators">
+                                    <strong>Indicators:</strong>
+                                    <ul>
+                                        ${ensureArray(processingAnalysis.indicators).map(indicator => `<li>${indicator}</li>`).join('')}
+                                    </ul>
+                                </div>
+                            ` : ''}
+                        </div>
                     </div>
-                    
-                    <!-- Analysis Section -->
-                    <div class="analysis-section">
-                        <div class="row">
-                            <div class="col-md-6">
-                                <h5 class="text-success">Positive Aspects</h5>
-                                <ul class="positive-list">
-                                    ${result.analysis.positive_aspects.map(aspect => `<li>${aspect}</li>`).join('')}
-                                </ul>
+                ` : ''}
+                
+                <!-- Recommendations Section -->
+                ${recommendations.consumption_frequency || (recommendations.healthier_alternatives && ensureArray(recommendations.healthier_alternatives).length > 0) ? `
+                    <div class="recommendations-section">
+                        <div class="section-title"><i class="fas fa-thumbs-up"></i> Recommendations</div>
+                        <div class="recommendations-container">
+                            ${recommendations.consumption_frequency ? `
+                                <div class="recommendation-item">
+                                    <h6>Consumption Frequency</h6>
+                                    <p>${recommendations.consumption_frequency}</p>
+                                </div>
+                            ` : ''}
+                            
+                            ${recommendations.healthier_alternatives && ensureArray(recommendations.healthier_alternatives).length > 0 ? `
+                                <div class="recommendation-item">
+                                    <h6>Healthier Alternatives</h6>
+                                    <ul>
+                                        ${ensureArray(recommendations.healthier_alternatives).map(alternative => `<li>${alternative}</li>`).join('')}
+                                    </ul>
+                                </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                ` : ''}
+                
+                <!-- Additional Analysis Sections (Collapsible) -->
+                <div class="additional-analysis-section">
+                    <div class="accordion" id="additionalAnalysisAccordion">
+                        <!-- Sugar Analysis -->
+                        ${sugarAnalysis.total_sugar_equivalents || sugarAnalysis.percent_of_daily_limit || (sugarAnalysis.hidden_sugars && ensureArray(sugarAnalysis.hidden_sugars).length > 0) ? `
+                            <div class="accordion-item">
+                                <h2 class="accordion-header" id="sugarAnalysisHeading">
+                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#sugarAnalysisCollapse">
+                                        <i class="fas fa-cube"></i> Sugar Analysis
+                                    </button>
+                                </h2>
+                                <div id="sugarAnalysisCollapse" class="accordion-collapse collapse" data-bs-parent="#additionalAnalysisAccordion">
+                                    <div class="accordion-body">
+                                        ${sugarAnalysis.total_sugar_equivalents ? `
+                                            <p><strong>Total Sugar Equivalents:</strong> ${sugarAnalysis.total_sugar_equivalents}</p>
+                                        ` : ''}
+                                        ${sugarAnalysis.percent_of_daily_limit ? `
+                                            <p><strong>Percent of Daily Limit:</strong> ${sugarAnalysis.percent_of_daily_limit}%</p>
+                                        ` : ''}
+                                        ${sugarAnalysis.hidden_sugars && ensureArray(sugarAnalysis.hidden_sugars).length > 0 ? `
+                                            <div class="hidden-sugars">
+                                                <strong>Hidden Sugars:</strong>
+                                                <div class="sugar-tags">
+                                                    ${ensureArray(sugarAnalysis.hidden_sugars).map(sugar => `<span class="sugar-tag">${sugar}</span>`).join('')}
+                                                </div>
+                                            </div>
+                                        ` : ''}
+                                    </div>
+                                </div>
                             </div>
-                            <div class="col-md-6">
-                                <h5 class="text-danger">Negative Aspects</h5>
-                                <ul class="negative-list">
-                                    ${result.analysis.negative_aspects.map(aspect => `<li>${aspect}</li>`).join('')}
-                                </ul>
+                        ` : ''}
+                        
+                        <!-- Contamination Risks -->
+                        ${contaminationRisks.microplastic_risk || contaminationRisks.pesticide_risk || (contaminationRisks.high_risk_ingredients && ensureArray(contaminationRisks.high_risk_ingredients).length > 0) ? `
+                            <div class="accordion-item">
+                                <h2 class="accordion-header" id="contaminationRisksHeading">
+                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#contaminationRisksCollapse">
+                                        <i class="fas fa-exclamation-triangle"></i> Contamination Risks
+                                    </button>
+                                </h2>
+                                <div id="contaminationRisksCollapse" class="accordion-collapse collapse" data-bs-parent="#additionalAnalysisAccordion">
+                                    <div class="accordion-body">
+                                        ${contaminationRisks.microplastic_risk ? `
+                                            <div class="risk-item">
+                                                <h6>Microplastic Risk</h6>
+                                                <p>${contaminationRisks.microplastic_risk}</p>
+                                            </div>
+                                        ` : ''}
+                                        
+                                        ${contaminationRisks.pesticide_risk ? `
+                                            <div class="risk-item">
+                                                <h6>Pesticide Risk</h6>
+                                                <p>${contaminationRisks.pesticide_risk}</p>
+                                            </div>
+                                        ` : ''}
+                                        
+                                        ${contaminationRisks.high_risk_ingredients && ensureArray(contaminationRisks.high_risk_ingredients).length > 0 ? `
+                                            <div class="risk-item">
+                                                <h6>High-Risk Ingredients</h6>
+                                                <div class="risk-tags">
+                                                    ${ensureArray(contaminationRisks.high_risk_ingredients).map(ingredient => `<span class="risk-tag">${ingredient}</span>`).join('')}
+                                                </div>
+                                            </div>
+                                        ` : ''}
+                                    </div>
+                                </div>
                             </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Notable Ingredients Section -->
-                    ${result.notable_ingredients && result.notable_ingredients.length > 0 ? `
-                        <div class="notable-ingredients-section">
-                            <h5><i class="bi bi-exclamation-triangle"></i> Notable Ingredients</h5>
-                            <div class="ingredients-container">
-                                ${result.notable_ingredients.map(ingredient => {
-                                    const isConcerning = isIngredientConcerning(ingredient);
-                                    return `<span class="ingredient-tag ${isConcerning ? 'ingredient-concerning' : 'ingredient-healthy'}">${ingredient}</span>`;
-                                }).join('')}
+                        ` : ''}
+                        
+                        <!-- Detailed Ingredient Analysis -->
+                        ${detailedIngredientAnalysis.length > 0 ? `
+                            <div class="accordion-item">
+                                <h2 class="accordion-header" id="detailedIngredientsHeading">
+                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#detailedIngredientsCollapse">
+                                        <i class="fas fa-microscope"></i> Detailed Ingredient Analysis
+                                    </button>
+                                </h2>
+                                <div id="detailedIngredientsCollapse" class="accordion-collapse collapse" data-bs-parent="#additionalAnalysisAccordion">
+                                    <div class="accordion-body">
+                                        ${detailedIngredientAnalysis.map((ingredient, index) => `
+                                            <div class="detailed-ingredient">
+                                                <h6>${ingredient.ingredient || 'Unknown ingredient'}</h6>
+                                                <p><strong>Purpose:</strong> ${ingredient.purpose || 'No information available'}</p>
+                                                <p><strong>Health Concerns:</strong></p>
+                                                <ul>
+                                                    ${ensureArray(ingredient.health_concerns).map(concern => `<li>${concern}</li>`).join('')}
+                                                </ul>
+                                                <p><strong>Industry Context:</strong> ${ingredient.industry_context || 'No information available'}</p>
+                                                ${ingredient.hidden_names && ensureArray(ingredient.hidden_names).length > 0 ? `
+                                                    <p><strong>Also Known As:</strong> ${ensureArray(ingredient.hidden_names).join(', ')}</p>
+                                                ` : ''}
+                                            </div>
+                                        `).join('')}
+                                    </div>
+                                </div>
                             </div>
-                        </div>
-                    ` : ''}
-                    
-                    <div class="share-section">
-                        <button class="download-button" id="download-btn">
-                            <i class="bi bi-download"></i> Download Card
-                        </button>
+                        ` : ''}
+                        
+                        <!-- Additive Impact -->
+                        ${additiveImpact.length > 0 ? `
+                            <div class="accordion-item">
+                                <h2 class="accordion-header" id="additiveImpactHeading">
+                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#additiveImpactCollapse">
+                                        <i class="fas fa-flask"></i> Additive Impact
+                                    </button>
+                                </h2>
+                                <div id="additiveImpactCollapse" class="accordion-collapse collapse" data-bs-parent="#additionalAnalysisAccordion">
+                                    <div class="accordion-body">
+                                        ${additiveImpact.map(additive => `
+                                            <div class="additive-card">
+                                                <h6>${additive.additive || 'Unknown additive'}</h6>
+                                                <p><strong>Function:</strong> ${additive.function || 'No information available'}</p>
+                                                <p><strong>Health Impact:</strong> ${additive.health_impact || 'No information available'}</p>
+                                                <p><strong>Regulatory Status:</strong> ${additive.regulatory_status || 'No information available'}</p>
+                                                ${additive.natural_alternatives && ensureArray(additive.natural_alternatives).length > 0 ? `
+                                                    <p><strong>Natural Alternatives:</strong> ${ensureArray(additive.natural_alternatives).join(', ')}</p>
+                                                ` : ''}
+                                            </div>
+                                        `).join('')}
+                                    </div>
+                                </div>
+                            </div>
+                        ` : ''}
+                        
+                        <!-- Environmental Impact -->
+                        ${environmentalImpact.footprint || environmentalImpact.sustainability_concerns || environmentalImpact.certifications ? `
+                            <div class="accordion-item">
+                                <h2 class="accordion-header" id="environmentalImpactHeading">
+                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#environmentalImpactCollapse">
+                                        <i class="fas fa-leaf"></i> Environmental Impact
+                                    </button>
+                                </h2>
+                                <div id="environmentalImpactCollapse" class="accordion-collapse collapse" data-bs-parent="#additionalAnalysisAccordion">
+                                    <div class="accordion-body">
+                                        ${environmentalImpact.footprint ? `
+                                            <p><strong>Footprint:</strong> ${environmentalImpact.footprint}</p>
+                                        ` : ''}
+                                        ${environmentalImpact.sustainability_concerns && ensureArray(environmentalImpact.sustainability_concerns).length > 0 ? `
+                                            <div class="sustainability-concerns">
+                                                <strong>Sustainability Concerns:</strong>
+                                                <ul>
+                                                    ${ensureArray(environmentalImpact.sustainability_concerns).map(concern => `<li>${concern}</li>`).join('')}
+                                                </ul>
+                                            </div>
+                                        ` : ''}
+                                        ${environmentalImpact.certifications && ensureArray(environmentalImpact.certifications).length > 0 ? `
+                                            <div class="certification-tags">
+                                                <strong>Certifications:</strong>
+                                                <div>
+                                                    ${ensureArray(environmentalImpact.certifications).map(cert => `<span class="certification-tag">${cert}</span>`).join('')}
+                                                </div>
+                                            </div>
+                                        ` : ''}
+                                    </div>
+                                </div>
+                            </div>
+                        ` : ''}
                     </div>
                 </div>
-            </div>
-            
-            <div class="card shadow-sm mt-4">
-                <div class="card-header bg-primary text-white">
-                    <h2 class="mb-0">Detailed Analysis</h2>
-                </div>
-                <div class="card-body">
-        `;
-        
-        // Product info
-        if (result.product_info) {
-            html += `
-                <div class="analysis-section">
-                    <h4><i class="bi bi-info-circle"></i> Product Information</h4>
-                    <div class="row">
-                        <div class="col-md-6">
-                            <p><strong>Brand:</strong> ${result.product_info.brand || 'N/A'}</p>
-                            <p><strong>Serving Size:</strong> ${result.product_info.serving_size}</p>
-                        </div>
-                        <div class="col-md-6">
-                            <p><strong>Calories:</strong> ${result.product_info.calories_per_serving} per serving</p>
-                            ${result.product_info.claims && result.product_info.claims.length > 0 ? 
-                                `<p><strong>Claims:</strong> ${result.product_info.claims.join(', ')}</p>` : ''}
-                        </div>
-                    </div>
-                </div>
-            `;
-        }
-        
-        // Nutrition facts
-        if (result.nutrition_facts) {
-            html += `
-                <div class="analysis-section">
-                    <h4><i class="bi bi-bar-chart"></i> Nutrition Facts</h4>
-                    <div class="table-responsive">
-                        <table class="nutrition-table">
-                            <thead>
-                                <tr>
-                                    <th>Nutrient</th>
-                                    <th>Amount</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-            `;
-            
-            for (const [key, value] of Object.entries(result.nutrition_facts)) {
-                const label = formatNutrientLabel(key);
-                html += `
-                    <tr>
-                        <td>${label}</td>
-                        <td>${value}${getNutrientUnit(key)}</td>
-                    </tr>
-                `;
-            }
-            
-            html += `
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            `;
-        }
-        
-        // Ingredients
-        if (result.ingredients && result.ingredients.length > 0) {
-            html += `
-                <div class="analysis-section">
-                    <h4><i class="bi bi-list-ul"></i> Ingredients</h4>
-                    <p>${result.ingredients.join(', ')}</p>
-                </div>
-            `;
-        }
-        
-        // Notable ingredients (already shown in viral card, but also showing in detailed view)
-        if (result.notable_ingredients && result.notable_ingredients.length > 0) {
-            html += `
-                <div class="analysis-section">
-                    <h4><i class="bi bi-exclamation-triangle"></i> Notable Ingredients</h4>
-                    <div>
-            `;
-            
-            result.notable_ingredients.forEach(ingredient => {
-                const isConcerning = isIngredientConcerning(ingredient);
-                html += `
-                    <span class="ingredient-tag ${isConcerning ? 'ingredient-concerning' : 'ingredient-healthy'}">
-                        ${ingredient}
-                    </span>
-                `;
-            });
-            
-            html += `
-                    </div>
-                </div>
-            `;
-        }
-        
-        html += `
+                
+                <!-- Share Section -->
+                <div class="share-section">
+                    <button class="download-button" id="download-btn">
+                        <i class="fas fa-download"></i> Download Analysis
+                    </button>
                 </div>
             </div>
         `;
@@ -446,20 +601,59 @@ document.addEventListener('DOMContentLoaded', () => {
         resultContent.innerHTML = html;
         
         // Add event listener for download button
-        document.getElementById('download-btn').addEventListener('click', handleDownload);
+        const downloadBtn = document.getElementById('download-btn');
+        if (downloadBtn) {
+            downloadBtn.addEventListener('click', handleDownload);
+        }
         
         // Scroll to results
         resultContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
 
+    // Generate nutrition highlights HTML
+    function generateNutritionHighlights(nutritionFacts) {
+        if (!nutritionFacts) return '';
+        
+        const keyNutrients = [
+            { key: 'calories_per_serving', label: 'Calories', icon: 'fire', unit: '' },
+            { key: 'total_fat_g', label: 'Total Fat', icon: 'oil-can', unit: 'g' },
+            { key: 'saturated_fat_g', label: 'Sat. Fat', icon: 'exclamation-triangle', unit: 'g' },
+            { key: 'sodium_mg', label: 'Sodium', icon: 'prescription-bottle', unit: 'mg' },
+            { key: 'total_carbohydrate_g', label: 'Carbs', icon: 'bread-slice', unit: 'g' },
+            { key: 'total_sugars_g', label: 'Sugars', icon: 'candy-cane', unit: 'g' },
+            { key: 'protein_g', label: 'Protein', icon: 'drumstick-bite', unit: 'g' },
+            { key: 'dietary_fiber_g', label: 'Fiber', icon: 'seedling', unit: 'g' }
+        ];
+        
+        let html = '';
+        keyNutrients.forEach(nutrient => {
+            const value = nutritionFacts[nutrient.key];
+            if (value !== undefined && value !== null) {
+                html += `
+                    <div class="nutrition-item">
+                        <div class="nutrition-icon">
+                            <i class="fas fa-${nutrient.icon}"></i>
+                        </div>
+                        <div class="nutrition-value">${value}${nutrient.unit}</div>
+                        <div class="nutrition-label">${nutrient.label}</div>
+                    </div>
+                `;
+            }
+        });
+        
+        return html;
+    }
+
     // Handle download button click
     function handleDownload() {
-        const card = document.getElementById('viral-card');
+        const card = document.getElementById('enhanced-result-card');
         const downloadBtn = document.getElementById('download-btn');
+        
+        if (!card || !downloadBtn) return;
         
         // Show loading state
         const originalText = downloadBtn.innerHTML;
-        downloadBtn.innerHTML = '<i class="bi bi-hourglass-split"></i> Generating...';
+        downloadBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating...';
         downloadBtn.disabled = true;
         
         // Temporarily hide the download button before capturing
@@ -474,8 +668,8 @@ document.addEventListener('DOMContentLoaded', () => {
         }).then(canvas => {
             // Create download link
             const link = document.createElement('a');
-            const productName = document.querySelector('.viral-card h3')?.textContent || 'Food Product';
-            const healthScore = document.querySelector('.score-circle').textContent;
+            const productName = document.querySelector('.product-brand')?.textContent || 'Food Product';
+            const healthScore = document.querySelector('.score-circle')?.textContent || '0';
             
             link.download = `${productName.replace(/[^a-z0-9]/gi, '_').toLowerCase()}_health_score_${healthScore}.png`;
             link.href = canvas.toDataURL('image/png');
@@ -489,7 +683,7 @@ document.addEventListener('DOMContentLoaded', () => {
             downloadBtn.disabled = false;
             
             // Show success message
-            showNotification('Card downloaded successfully!', 'success');
+            showNotification('Analysis downloaded successfully!', 'success');
         }).catch(error => {
             console.error('Error generating image:', error);
             
@@ -501,7 +695,7 @@ document.addEventListener('DOMContentLoaded', () => {
             downloadBtn.disabled = false;
             
             // Show error message
-            showNotification('Failed to download card. Please try again.', 'danger');
+            showNotification('Failed to download analysis. Please try again.', 'danger');
         });
     }
 
@@ -532,23 +726,12 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     function getCSRFToken() {
-        return document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-    }
-    
-    function formatNutrientLabel(key) {
-        return key.replace(/_/g, ' ')
-                  .replace(/\b\w/g, l => l.toUpperCase())
-                  .replace('Mg', 'mg')
-                  .replace('G', 'g');
-    }
-    
-    function getNutrientUnit(key) {
-        if (key.includes('mg')) return 'mg';
-        if (key.includes('g')) return 'g';
-        return '';
+        const tokenElement = document.querySelector('meta[name="csrf-token"]');
+        return tokenElement ? tokenElement.getAttribute('content') : '';
     }
     
     function isIngredientConcerning(ingredient) {
+        if (!ingredient) return false;
         const concerning = [
             'sugar', 'high fructose', 'corn syrup', 'palm oil', 'hydrogenated',
             'artificial', 'preservative', 'color', 'sweetener', 'sodium nitrite'
