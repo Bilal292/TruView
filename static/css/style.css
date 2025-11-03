@@ -485,6 +485,7 @@ a:hover {
 
 /* Analyzer Section */
 .analyzer-section {
+    min-height: 100vh;
     padding: 100px 0;
     background: linear-gradient(135deg, #f8f9fa 0%, #e9f7ef 100%);
     position: relative;
