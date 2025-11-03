@@ -10,7 +10,9 @@ channels==4.3.1
 constantly==23.10.4
 cryptography==46.0.3
 daphne==4.2.1
+dj-database-url==3.0.1
 Django==5.2.7
+gunicorn==23.0.0
 h11==0.16.0
 httpcore==1.0.9
 httpx==0.28.1
@@ -18,6 +20,7 @@ hyperlink==21.0.0
 idna==3.11
 incremental==24.7.2
 packaging==25.0
+psycopg2-binary==2.9.11
 pyasn1==0.6.1
 pyasn1_modules==0.4.2
 pycparser==2.23
