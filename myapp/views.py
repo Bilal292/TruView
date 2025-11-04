@@ -2,6 +2,7 @@ from django.shortcuts import render
 from django.http import JsonResponse
 from django.conf import settings
 from django.views.decorators.csrf import csrf_protect
+from django.views.decorators.csrf import csrf_exempt
 from django_ratelimit.decorators import ratelimit
 import os
 import uuid
@@ -23,7 +24,7 @@ def get_client_ip(_, request):
         ip = request.META.get('REMOTE_ADDR')
     return ip
 
-@csrf_protect
+@csrf_exempt
 @ratelimit(key=get_client_ip, rate='1/m', block=False)  # 3 requests per minute per IP
 def upload_image(request):
     # Check if rate limit is exceeded
