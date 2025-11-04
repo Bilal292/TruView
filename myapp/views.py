@@ -6,6 +6,8 @@ from django.views.decorators.csrf import csrf_exempt
 from django_ratelimit.decorators import ratelimit
 import os
 import uuid
+from django.core.cache import cache
+import time
 
 MAX_FILE_SIZE = 8 * 1024 * 1024  # 8 MB
 
@@ -24,8 +26,24 @@ def get_client_ip(_, request):
         ip = request.META.get('REMOTE_ADDR')
     return ip
 
+# Function to get a more specific rate limiting key
+def get_rate_limit_key(_, request):
+    ip = get_client_ip(_, request)
+    
+    # Try to get session key if available
+    session_key = ''
+    if hasattr(request, 'session') and request.session.session_key:
+        session_key = request.session.session_key
+    else:
+        # Create a session if it doesn't exist
+        request.session.save()
+        session_key = request.session.session_key
+    
+    # Combine IP and session key for a more specific rate limit key
+    return f"upload_limit:{ip}:{session_key}"
+
 @csrf_exempt
-@ratelimit(key=get_client_ip, rate='1/m', block=False)  # 3 requests per minute per IP
+@ratelimit(key=get_rate_limit_key, rate='1/m', block=False)  # 1 request per minute
 def upload_image(request):
     # Check if rate limit is exceeded
     if getattr(request, 'limited', False):

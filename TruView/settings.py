@@ -128,3 +128,28 @@ MEDIA_ROOT = BASE_DIR / "media/"
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# For development ( LocMemCache )
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+        'LOCATION': 'rate-limit-cache',
+        'TIMEOUT': 300,  # 5 minutes
+    }
+}
+
+# For production ( Redis is recommended )
+# CACHES = {
+#     'default': {
+#         'BACKEND': 'django_redis.cache.RedisCache',
+#         'LOCATION': 'redis://127.0.0.1:6379/1',
+#         'OPTIONS': {
+#             'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+#         },
+#         'KEY_PREFIX': 'rate_limit',
+#         'TIMEOUT': 300,
+#     }
+# }
+
+# Configure django_ratelimit to use the cache
+RATELIMIT_USE_CACHE = 'default'
