@@ -1,4 +1,27 @@
 document.addEventListener('DOMContentLoaded', () => {
+
+    const howItWorksModal = document.getElementById('howItWorksModal');
+    
+    if (howItWorksModal) {
+        howItWorksModal.addEventListener('show.bs.modal', function() {
+            // Add animation class when modal is shown
+            setTimeout(() => {
+                const modalImage = howItWorksModal.querySelector('.how-it-works-image-container img');
+                if (modalImage) {
+                    modalImage.classList.add('animate__animated', 'animate__fadeIn');
+                }
+            }, 100);
+        });
+        
+        howItWorksModal.addEventListener('hidden.bs.modal', function() {
+            // Remove animation class when modal is hidden
+            const modalImage = howItWorksModal.querySelector('.how-it-works-image-container img');
+            if (modalImage) {
+                modalImage.classList.remove('animate__animated', 'animate__fadeIn');
+            }
+        });
+    }
+
     // Initialize components
     const form = document.getElementById('upload-form');
     const imageInput = document.getElementById('image');
@@ -188,7 +211,10 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             const response = await fetch('/upload-image/', {
                 method: 'POST',
-                body: formData
+                body: formData,
+                headers: {
+                    'X-CSRFToken': getCSRFToken()
+                }
             });
             
             const data = await response.json();
@@ -224,11 +250,38 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                 }, 1000);
             } else {
-                showNotification("Image upload failed. Please try again.", "danger");
-                submitButton.disabled = false;
+                // Handle rate limiting error specifically (HTTP 429)
+                if (response.status === 429 || (data.error && data.error.includes('Rate limit exceeded'))) {
+                    const retryAfter = data.retry_after || 60;
+                    showNotification(
+                        `Rate limit exceeded. Please wait ${retryAfter} seconds before trying again.`, 
+                        "warning"
+                    );
+                    
+                    // Update UI to show countdown
+                    let retryTimeLeft = retryAfter;
+                    submitButton.innerHTML = `<i class="fas fa-clock"></i> Try again in ${retryTimeLeft}s`;
+                    
+                    const retryInterval = setInterval(() => {
+                        retryTimeLeft--;
+                        if (retryTimeLeft <= 0) {
+                            clearInterval(retryInterval);
+                            submitButton.innerHTML = '<i class="fas fa-magic me-2"></i> Analyze Nutrition';
+                            submitButton.disabled = false;
+                        } else {
+                            submitButton.innerHTML = `<i class="fas fa-clock"></i> Try again in ${retryTimeLeft}s`;
+                        }
+                    }, 1000);
+                } else {
+                    // Handle other errors
+                    showNotification(data.error || "Image upload failed. Please try again.", "danger");
+                    submitButton.disabled = false;
+                }
+                
                 spinner.style.display = 'none';
             }
         } catch (error) {
+            console.error('Upload error:', error);
             showNotification("Something went wrong. Please try again.", "danger");
             submitButton.disabled = false;
             spinner.style.display = 'none';
@@ -857,6 +910,54 @@ document.addEventListener('DOMContentLoaded', () => {
         if (currentStream) {
             currentStream.getTracks().forEach(track => track.stop());
             currentStream = null;
+        }
+    }
+
+    // Format time for display (seconds to MM:SS)
+    function formatTime(seconds) {
+        const minutes = Math.floor(seconds / 60);
+        const secs = seconds % 60;
+        return `${minutes}:${secs.toString().padStart(2, '0')}`;
+    }
+
+    // Show notification message (update this function if you already have it)
+    function showNotification(message, type) {
+        // Remove any existing notifications
+        const existingNotifications = document.querySelectorAll('.notification-toast');
+        existingNotifications.forEach(notification => notification.remove());
+        
+        const notification = document.createElement('div');
+        notification.className = `notification-toast alert alert-${type} position-fixed`;
+        notification.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 250px; max-width: 400px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);';
+        notification.innerHTML = `
+            <div class="d-flex align-items-center">
+                <div class="me-2">
+                    ${type === 'success' ? '<i class="fas fa-check-circle"></i>' : 
+                    type === 'warning' ? '<i class="fas fa-exclamation-triangle"></i>' : 
+                    type === 'danger' ? '<i class="fas fa-times-circle"></i>' : 
+                    '<i class="fas fa-info-circle"></i>'}
+                </div>
+                <div>${message}</div>
+                <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert"></button>
+            </div>
+        `;
+        
+        document.body.appendChild(notification);
+        
+        // Auto-remove after 5 seconds
+        setTimeout(() => {
+            notification.classList.add('fade-out');
+            setTimeout(() => {
+                notification.remove();
+            }, 500);
+        }, 5000);
+        
+        // Add close button functionality
+        const closeBtn = notification.querySelector('.btn-close');
+        if (closeBtn) {
+            closeBtn.addEventListener('click', () => {
+                notification.remove();
+            });
         }
     }
 });

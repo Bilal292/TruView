@@ -65,11 +65,10 @@
                                 <span class="btn-text">Start Analyzing</span>
                                 <i class="fas fa-arrow-down ms-2"></i>
                             </a>
-                            <a href="/how-it-works" class="btn btn-outline-light btn-lg">
+                            <a href="#" class="btn btn-outline-light btn-lg" data-bs-toggle="modal" data-bs-target="#howItWorksModal">
                                 <span class="btn-text-work">How It Works
                                     <i class="fas fa-play-circle ms-2"></i>
                                 </span>
-        
                             </a>
                         </div>
                         <div class="trust-indicators">
@@ -98,6 +97,27 @@
     </section>
 
 
+    <!-- How It Works Modal -->
+    <div class="modal fade" id="howItWorksModal" tabindex="-1" aria-labelledby="howItWorksModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+                <div class="modal-header border-0">
+                    <h5 class="modal-title" id="howItWorksModalLabel">How TruView AI Works</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-0">
+                    <div class="how-it-works-image-container">
+                        <img src="https://raw.githubusercontent.com/hostingpic/truviewContent/refs/heads/main/howitworks.jpg" alt="How TruView AI Works" class="img-fluid">
+                    </div>
+                </div>
+                <div class="modal-footer border-0 justify-content-center">
+                    <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Got it!</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
 
     <!-- Main Content -->
     <main class="main-content">
@@ -123,35 +143,33 @@
                         </div>
                         <p class="footer-tagline">Your intelligent food nutrition assistant powered by advanced AI technology.</p>
                         <div class="social-links">
-                            <a href="#" class="social-link"><i class="fab fa-facebook-f"></i></a>
-                            <a href="#" class="social-link"><i class="fab fa-twitter"></i></a>
+                            <a href="#" class="social-link"><i class="fab fa-tiktok"></i></a>
                             <a href="#" class="social-link"><i class="fab fa-instagram"></i></a>
-                            <a href="#" class="social-link"><i class="fab fa-linkedin-in"></i></a>
                         </div>
                     </div>
                 </div>
                 <div class="col-lg-2 col-md-6 mb-4 mb-md-0">
-                    <h5 class="footer-title">Navigation</h5>
+                    {% comment %} <h5 class="footer-title">Navigation</h5>
                     <ul class="footer-links">
                         <li><a href="/">Home</a></li>
-                    </ul>
+                    </ul> {% endcomment %}
                 </div>
                 <div class="col-lg-2 col-md-6 mb-4 mb-md-0">
                     <h5 class="footer-title">Resources</h5>
                     <ul class="footer-links">
-                        <li><a href="/privacy">Privacy Policy</a></li>
-                        <li><a href="/terms">Terms of Service</a></li>
+                        <li><a href="/">Privacy Policy</a></li>
+                        <li><a href="/">Terms of Service</a></li>
                     </ul>
                 </div>
                 <div class="col-lg-4">
-                    <h5 class="footer-title">Stay Updated</h5>
+                    {% comment %} <h5 class="footer-title">Stay Updated</h5>
                     <p class="footer-text">Subscribe to our newsletter for the latest updates on nutrition and health.</p>
                     <form class="newsletter-form">
                         <div class="input-group">
                             <input type="email" class="form-control" placeholder="Your email address">
                             <button class="btn btn-primary" type="submit">Subscribe</button>
                         </div>
-                    </form>
+                    </form> {% endcomment %}
                 </div>
             </div>
             <div class="footer-bottom">

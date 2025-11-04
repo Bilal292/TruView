@@ -2081,6 +2081,73 @@ a:hover {
     opacity: 0.8;
 }
 
+/* How It Works Modal Styles */
+.how-it-works-image-container {
+    position: relative;
+    overflow: hidden;
+    border-radius: 0.5rem;
+}
+
+.how-it-works-image-container img {
+    width: 100%;
+    height: auto;
+    display: block;
+    transition: transform 0.3s ease;
+}
+
+.modal-content {
+    border-radius: 1rem;
+    overflow: hidden;
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+}
+
+.modal-header {
+    background: var(--gradient-1);
+    color: white;
+}
+
+.modal-header .btn-close {
+    filter: brightness(0) invert(1);
+}
+
+.modal-footer {
+    background: rgba(123, 47, 247, 0.05);
+}
+
+/* Animation for modal image */
+.modal.show .how-it-works-image-container img {
+    transform: scale(1.02);
+}
+
+.notification-toast {
+    animation: slideIn 0.3s ease-out;
+    border-radius: 8px;
+}
+
+.notification.toast.fade-out {
+    animation: fadeOut 0.5s ease-out forwards;
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes fadeOut {
+    from {
+        opacity: 1;
+    }
+    to {
+        opacity: 0;
+    }
+}
+
 /* Responsive Adjustments */
 @media (max-width: 992px) {
     .hero-title {
