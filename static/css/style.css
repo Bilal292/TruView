@@ -717,17 +717,8 @@ a:hover {
     width: 100%;
     height: 5px;
     background: var(--gradient-1);
-    animation: loading-progress 2s infinite linear;
 }
 
-@keyframes loading-progress {
-    0% {
-        transform: translateX(-100%);
-    }
-    100% {
-        transform: translateX(100%);
-    }
-}
 
 .loading-content {
     display: flex;
@@ -757,6 +748,7 @@ a:hover {
 .progress-bar {
     height: 100%;
     background: var(--gradient-1);
+    transition: width 0.3s ease;
 }
 
 /* Results Container */

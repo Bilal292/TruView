@@ -1,7 +1,7 @@
 document.addEventListener('DOMContentLoaded', () => {
 
+    // How it Works Modal
     const howItWorksModal = document.getElementById('howItWorksModal');
-    
     if (howItWorksModal) {
         howItWorksModal.addEventListener('show.bs.modal', function() {
             // Add animation class when modal is shown
@@ -35,7 +35,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const resultContainer = document.getElementById('result-container');
     const resultContent = document.getElementById('result-content');
     const submitButton = document.getElementById('submit-button');
-    const countdownElement = document.getElementById('countdown-timer');
+    const progressBar = document.querySelector('.progress-bar');
 
     const cameraBtn = document.getElementById('camera-btn');
     const cameraView = document.getElementById('camera-view');
@@ -51,7 +51,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let capturedFile = null; // Store captured file globally
         
     let socket;
-    let countdownInterval;
+    let loadingInterval;
     let timeLeft = 60;
     const ws_scheme = window.location.protocol === "https:" ? "wss" : "ws";
     const ws_route = '/ws/nutrition-analysis/';
@@ -211,10 +211,7 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             const response = await fetch('/upload-image/', {
                 method: 'POST',
-                body: formData,
-                headers: {
-                    'X-CSRFToken': getCSRFToken()
-                }
+                body: formData
             });
             
             const data = await response.json();
@@ -236,19 +233,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     }, { once: true });
                 }
                 
-                // Start countdown timer
-                timeLeft = 60;
-                clearInterval(countdownInterval);
-                countdownElement.textContent = `Estimated time: ${formatTime(timeLeft)}`;
-                countdownInterval = setInterval(() => {
-                    timeLeft--;
-                    if (timeLeft <= 0) {
-                        clearInterval(countdownInterval);
-                        countdownElement.textContent = "Still processing... please wait a bit longer!";
-                    } else {
-                        countdownElement.textContent = `Estimated time: ${formatTime(timeLeft)}`;
-                    }
-                }, 1000);
+                // Start fake loading bar
+                startFakeLoading();
             } else {
                 // Handle rate limiting error specifically (HTTP 429)
                 if (response.status === 429 || (data.error && data.error.includes('Rate limit exceeded'))) {
@@ -285,15 +271,20 @@ document.addEventListener('DOMContentLoaded', () => {
             showNotification("Something went wrong. Please try again.", "danger");
             submitButton.disabled = false;
             spinner.style.display = 'none';
-            clearInterval(countdownInterval);
-            countdownElement.textContent = '';
+            clearInterval(loadingInterval);
         }
     });
-    
+
     // Handle WebSocket messages
     function handleSocketMessage(data) {
-        clearInterval(countdownInterval);
-        countdownElement.textContent = '';
+        clearInterval(loadingInterval);
+        
+        // Get the progress bar element
+        const progressBar = document.querySelector('.progress-bar');
+        if (progressBar) {
+            progressBar.style.width = '100%';
+            progressBar.setAttribute('aria-valuenow', 100);
+        }
         
         if (data.analysis_result) {
             spinner.style.display = 'none';
@@ -307,6 +298,64 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         
         submitButton.disabled = false;
+    }
+
+    // Function to start fake loading bar
+    function startFakeLoading() {
+        // Clear any existing interval
+        clearInterval(loadingInterval);
+        
+        // Get progress container
+        const progressContainer = document.querySelector('.progress');
+        
+        // Clear any previous bar (in case of repeated uploads)
+        progressContainer.innerHTML = '';
+        
+        // Create new progress bar element
+        const progressBar = document.createElement('div');
+        progressBar.className = 'progress-bar';
+        progressBar.setAttribute('role', 'progressbar');
+        progressBar.style.width = '0%';
+        progressBar.setAttribute('aria-valuenow', '0');
+        progressBar.setAttribute('aria-valuemin', '0');
+        progressBar.setAttribute('aria-valuemax', '100');
+        
+        // Add it to the DOM
+        progressContainer.appendChild(progressBar);
+        
+        let progress = 0;
+        const startTime = Date.now();
+        
+        // Add shimmer effect first
+        const spinnerElement = document.querySelector('.loading-spinner');
+        if (spinnerElement) {
+            spinnerElement.classList.add('preloading');
+        }
+        
+        // After short delay, remove shimmer and start actual progress
+        setTimeout(() => {
+            if (spinnerElement) {
+                spinnerElement.classList.remove('preloading');
+            }
+            
+            loadingInterval = setInterval(() => {
+                const elapsedTime = (Date.now() - startTime) / 1000;
+                
+                if (elapsedTime < 10) {
+                    progress = (elapsedTime / 10) * 40; // up to 40%
+                } else if (elapsedTime < 20) {
+                    progress = 40 + ((elapsedTime - 10) / 10) * 40; // up to 80%
+                } else if (progress < 99) {
+                    progress += 0.5; // slow to 99%
+                } else {
+                    clearInterval(loadingInterval);
+                }
+                
+                // Update progress bar
+                progressBar.style.width = progress + '%';
+                progressBar.setAttribute('aria-valuenow', Math.round(progress));
+            }, 200);
+        }, 1500); // 1.5s shimmer before actual progress
     }
     
     // Helper function to ensure array or convert to array
@@ -642,12 +691,14 @@ document.addEventListener('DOMContentLoaded', () => {
                     </div>
                 </div>
                 
+
                 <!-- Share Section -->
                 <div class="share-section">
                     <button class="download-button" id="download-btn">
                         <i class="fas fa-download"></i> Download Analysis
                     </button>
                 </div>
+                <br>
             </div>
         `;
         

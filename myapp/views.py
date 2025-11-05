@@ -43,7 +43,7 @@ def get_rate_limit_key(_, request):
     return f"upload_limit:{ip}:{session_key}"
 
 @csrf_exempt
-@ratelimit(key=get_rate_limit_key, rate='1/m', block=False)  # 1 request per minute
+@ratelimit(key=get_rate_limit_key, rate='3/m', block=False)  # 3 request per minute
 def upload_image(request):
     # Check if rate limit is exceeded
     if getattr(request, 'limited', False):
